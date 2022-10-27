@@ -151,6 +151,7 @@ val sign :
   ?pp:Format.formatter ->
   ?buf:Cstruct.t ->
   ?hash_on_ledger:bool ->
+  ?command:int ->
   Ledgerwallet.Transport.t ->
   curve ->
   int32 list ->

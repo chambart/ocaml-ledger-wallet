@@ -277,19 +277,55 @@ let set_high_watermark ?pp ?buf h hwm =
   let apdu = Apdu.create ~lc:4 ~data (wrap_ins Reset_high_watermark) in
   Transport.apdu ~msg:"set_high_watermark" ?pp ?buf h apdu >>| ignore
 
-let sign ?pp ?buf ?(hash_on_ledger = true) h curve path payload =
+let sign ?pp ?buf ?(hash_on_ledger = true) ?command h curve path
+    payload =
   let nb_derivations = List.length path in
   if nb_derivations > 10 then invalid_arg "get_public_key: max 10 derivations" ;
-  let lc = 1 + (4 * nb_derivations) in
-  let data_init = Cstruct.create lc in
-  Cstruct.set_uint8 data_init 0 nb_derivations ;
-  let data = Cstruct.shift data_init 1 in
-  let _data = write_path data path in
-  let cmd = wrap_ins (if hash_on_ledger then Sign else Sign_unsafe) in
-  let msg = "sign" in
-  let apdu = Apdu.create ~p2:(int_of_curve curve) ~lc ~data:data_init cmd in
-  let _addr = Transport.apdu ~msg ?pp ?buf h apdu in
-  Transport.write_payload ~mark_last:true ?pp ?buf ~msg ~cmd h ~p1:0x01 payload
+  match command with
+  | Some command ->
+    let size_command =
+      1
+    in
+    let lc = size_command + 1 + (4 * nb_derivations) in
+    let data_init = Cstruct.create lc in
+    Cstruct.set_uint8 data_init 0 nb_derivations ;
+    let () =
+      Cstruct.set_uint8 data_init 1 command ;
+    in
+    let data = Cstruct.shift data_init (1 + size_command) in
+    let _data = write_path data path in
+    let cmd = wrap_ins (if hash_on_ledger then Sign else Sign_unsafe) in
+    let msg = "sign" in
+    let apdu = Apdu.create ~p2:(int_of_curve curve) ~lc ~data:data_init cmd in
+    let _addr = Transport.apdu ~msg ?pp ?buf h apdu in
+    Transport.write_payload
+      ~mark_last:true
+      ?pp
+      ?buf
+      ~msg
+      ~cmd
+      h
+      ~p1:0x01
+      payload
+  | None ->
+    let lc = 1 + (4 * nb_derivations) in
+    let data_init = Cstruct.create lc in
+    Cstruct.set_uint8 data_init 0 nb_derivations ;
+    let data = Cstruct.shift data_init 1 in
+    let _data = write_path data path in
+    let cmd = wrap_ins (if hash_on_ledger then Sign else Sign_unsafe) in
+    let msg = "sign" in
+    let apdu = Apdu.create ~p2:(int_of_curve curve) ~lc ~data:data_init cmd in
+    let _addr = Transport.apdu ~msg ?pp ?buf h apdu in
+    Transport.write_payload
+      ~mark_last:true
+      ?pp
+      ?buf
+      ~msg
+      ~cmd
+      h
+      ~p1:0x01
+      payload
 
 let get_deterministic_nonce ?pp ?buf h curve path payload =
   let nb_derivations = List.length path in
