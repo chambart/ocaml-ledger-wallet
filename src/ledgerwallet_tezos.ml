@@ -288,10 +288,8 @@ let sign ?pp ?buf ?(hash_on_ledger = true) ?command h curve path
     in
     let lc = size_command + 1 + (4 * nb_derivations) in
     let data_init = Cstruct.create lc in
-    Cstruct.set_uint8 data_init 0 nb_derivations ;
-    let () =
-      Cstruct.set_uint8 data_init 1 command ;
-    in
+    Cstruct.set_uint8 data_init 0 command ;
+    Cstruct.set_uint8 data_init 1 nb_derivations ;
     let data = Cstruct.shift data_init (1 + size_command) in
     let _data = write_path data path in
     let cmd = wrap_ins (if hash_on_ledger then Sign else Sign_unsafe) in
