@@ -277,10 +277,14 @@ let set_high_watermark ?pp ?buf h hwm =
   let apdu = Apdu.create ~lc:4 ~data (wrap_ins Reset_high_watermark) in
   Transport.apdu ~msg:"set_high_watermark" ?pp ?buf h apdu >>| ignore
 
-let sign ?pp ?buf ?(hash_on_ledger = true) ?command h curve path
+let sign ?pp ?buf ?(hash_on_ledger = true) ?(command) h curve path
     payload =
   let nb_derivations = List.length path in
   if nb_derivations > 10 then invalid_arg "get_public_key: max 10 derivations" ;
+  let command = match command with
+    | None -> Some 3
+    | v -> v
+  in
   match command with
   | Some command ->
     let size_command =

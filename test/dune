@@ -21,3 +21,8 @@
  (modules Test_ssh_agent)
  (package ledgerwallet-ssh-agent)
  (libraries hex alcotest ledgerwallet-ssh-agent))
+
+(test
+ (name machin)
+ (modules Machin)
+ (libraries ledgerwallet-tezos))
